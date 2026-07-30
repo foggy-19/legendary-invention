@@ -23,21 +23,21 @@ public class LoggingAspect {
 
     @Before("controllerMethods()")
     public void controllerLogBefore(JoinPoint joinPoint) {
-        log.info("[controller]: {} <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
+        log.info("[controller]:[{}] <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
     }
 
     @AfterReturning(pointcut = "controllerMethods()", returning = "result")
     public void controllerLogAfterReturning(JoinPoint joinPoint, Object result) {
-        log.info("[controller]: {} -> {}", joinPoint.getSignature().getName(), result);
+        log.info("[controller]:[{}] -> {}", joinPoint.getSignature().getName(), result);
     }
 
     @Before("serviceMethods()")
     public void serviceLogBefore(JoinPoint joinPoint) {
-        log.info("[service]: {} <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
+        log.info("[service]:[{}] <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
     }
 
     @AfterReturning(pointcut = "serviceMethods()", returning = "result")
     public void serviceLogAfterReturning(JoinPoint joinPoint, Object result) {
-        log.info("[service]: {} -> {}", joinPoint.getSignature().getName(), result);
+        log.info("[service]:[{}] -> {}", joinPoint.getSignature().getName(), result);
     }
 }
