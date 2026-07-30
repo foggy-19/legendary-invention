@@ -6,9 +6,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: energy-db
+      MYSQL_ROOT_PASSWORD: password123
       MYSQL_USER: admin
       MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: password123
     ports:
       - "3306:3306"
     volumes:
