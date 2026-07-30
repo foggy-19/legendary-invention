@@ -15,23 +15,23 @@ public class UserController {
     private final UserService service;
 
     @PostMapping
-    public ResponseEntity<CreateUserResponseDto> createUser(@RequestBody CreateUserRequestDto request) {
-        return new ResponseEntity<>(service.create(request), HttpStatus.CREATED);
-    }
-
-    @PutMapping(path = "/{id}")
-    public ResponseEntity<UpdateUserResponseDto> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequestDto updateUserRequestDto) {
-        return ResponseEntity.ok(service.update(id, updateUserRequestDto));
+    public ResponseEntity<CreateUserResponseDto> createUser(@RequestBody CreateUserRequestDto createUserRequestDto) {
+        return new ResponseEntity<>(service.createUser(createUserRequestDto), HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<GetUserResponseDto> getUser(@PathVariable Long id) {
-        return service.get(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return service.getUser(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping(path = "/{id}")
+    public ResponseEntity<UpdateUserResponseDto> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequestDto updateUserRequestDto) {
+        return ResponseEntity.ok(service.updateUser(id, updateUserRequestDto));
     }
 
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        service.delete(id);
+        service.deleteUser(id);
 
         return ResponseEntity.noContent().build();
     }

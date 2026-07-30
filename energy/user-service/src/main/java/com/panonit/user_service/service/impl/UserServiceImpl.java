@@ -20,7 +20,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public CreateUserResponseDto create(CreateUserRequestDto createUserRequestDto) {
+    public CreateUserResponseDto createUser(CreateUserRequestDto createUserRequestDto) {
         if (repository.existsByEmail(createUserRequestDto.getEmail())) {
             throw new IllegalArgumentException("User already exists");
         }
@@ -31,8 +31,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<GetUserResponseDto> getUser(Long id) {
+        return repository.findById(id).map(mapper::toGetUserResponseDto);
+    }
+
+
+    @Override
     @Transactional
-    public UpdateUserResponseDto update(Long id, UpdateUserRequestDto updateUserRequestDto) {
+    public UpdateUserResponseDto updateUser(Long id, UpdateUserRequestDto updateUserRequestDto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(String.format("User with ID %s not found", id)));
 
@@ -43,18 +49,14 @@ public class UserServiceImpl implements UserService {
         user.setAlerting(updateUserRequestDto.getNotifications());
         user.setEnergyAlertingThreshold(updateUserRequestDto.getEnergyAlertingThreshold());
 
-        return mapper.toUpdateUserResponseDto(repository.save(user));
+        User updated = repository.save(user);
+
+        return mapper.toUpdateUserResponseDto(updated);
     }
 
     @Override
     @Transactional
-    public Optional<GetUserResponseDto> get(Long id) {
-        return repository.findById(id).map(mapper::toGetUserResponseDto);
-    }
-
-    @Override
-    @Transactional
-    public void delete(Long id) {
+    public void deleteUser(Long id) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(String.format("User with ID %s not found", id)));
 

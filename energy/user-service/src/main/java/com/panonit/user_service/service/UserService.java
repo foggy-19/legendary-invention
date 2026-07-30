@@ -6,11 +6,11 @@ import java.util.Optional;
 
 public interface UserService {
 
-    CreateUserResponseDto create(CreateUserRequestDto createUserRequestDto);
+    CreateUserResponseDto createUser(CreateUserRequestDto createUserRequestDto);
 
-    UpdateUserResponseDto update(Long id, UpdateUserRequestDto updateUserRequestDto);
+    Optional<GetUserResponseDto> getUser(Long id);
 
-    Optional<GetUserResponseDto> get(Long id);
+    UpdateUserResponseDto updateUser(Long id, UpdateUserRequestDto updateUserRequestDto);
 
-    void delete(Long id);
+    void deleteUser(Long id);
 }
