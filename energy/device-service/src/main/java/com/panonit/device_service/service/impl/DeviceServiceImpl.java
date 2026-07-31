@@ -37,9 +37,9 @@ public class DeviceServiceImpl implements DeviceService {
         Device device = repository.findById(id)
                 .orElseThrow(() -> new DeviceNotFoundException(String.format("Device with ID %s not found", id)));
 
-        device.setName(updateDeviceRequestDto.getName());
-        device.setType(updateDeviceRequestDto.getType());
-        device.setLocation(updateDeviceRequestDto.getLocation());
+        device.setName(updateDeviceRequestDto.name());
+        device.setType(updateDeviceRequestDto.type());
+        device.setLocation(updateDeviceRequestDto.location());
 
         final Device updated = repository.save(device);
 

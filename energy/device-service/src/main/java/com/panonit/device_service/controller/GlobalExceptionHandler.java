@@ -12,21 +12,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception e) {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("Unexpected failure")
-                .build();
-
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(
+                new ErrorResponseDto(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected failure"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
     @ExceptionHandler(DeviceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleDeviceNotFoundException(DeviceNotFoundException e) {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .message(e.getMessage())
-                .build();
-
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(
+                new ErrorResponseDto(HttpStatus.NOT_FOUND.value(), e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
     }
 }
