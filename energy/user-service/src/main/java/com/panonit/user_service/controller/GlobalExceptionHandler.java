@@ -13,31 +13,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception e) {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("Unexpected failure")
-                .build();
-
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(
+                new ErrorResponseDto(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unexpected failure"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleUserNotFoundException(UserNotFoundException e) {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .message(e.getMessage())
-                .build();
-
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(
+                new ErrorResponseDto(HttpStatus.NOT_FOUND.value(), e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(e.getMessage())
-                .build();
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponseDto(HttpStatus.BAD_REQUEST.value(), e.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
     }
 }

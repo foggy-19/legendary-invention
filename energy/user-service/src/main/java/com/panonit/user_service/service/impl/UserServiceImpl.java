@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public CreateUserResponseDto createUser(CreateUserRequestDto createUserRequestDto) {
-        if (repository.existsByEmail(createUserRequestDto.getEmail())) {
+        if (repository.existsByEmail(createUserRequestDto.email())) {
             throw new UserAlreadyExistsException("User already exists");
         }
 
@@ -43,12 +43,12 @@ public class UserServiceImpl implements UserService {
         User user = repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(String.format("User with ID %s not found", id)));
 
-        user.setFirstName(updateUserRequestDto.getFirstName());
-        user.setLastName(updateUserRequestDto.getLastName());
-        user.setEmail(updateUserRequestDto.getEmail());
-        user.setAddress(updateUserRequestDto.getAddress());
-        user.setAlerting(updateUserRequestDto.getNotifications());
-        user.setEnergyAlertingThreshold(updateUserRequestDto.getEnergyAlertingThreshold());
+        user.setFirstName(updateUserRequestDto.firstName());
+        user.setLastName(updateUserRequestDto.lastName());
+        user.setEmail(updateUserRequestDto.email());
+        user.setAddress(updateUserRequestDto.address());
+        user.setAlerting(updateUserRequestDto.notifications());
+        user.setEnergyAlertingThreshold(updateUserRequestDto.energyAlertingThreshold());
 
         User updated = repository.save(user);
 

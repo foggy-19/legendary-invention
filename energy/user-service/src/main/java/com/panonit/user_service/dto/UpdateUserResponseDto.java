@@ -1,17 +1,12 @@
 package com.panonit.user_service.dto;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class UpdateUserResponseDto {
-    private Long id;
-    String firstName;
-    String lastName;
-    String email;
-    String address;
-    private Boolean notifications;
-    private Double energyAlertingThreshold;
+public record UpdateUserResponseDto(
+        Long id,
+        String firstName,
+        String lastName,
+        String email,
+        String address,
+        Boolean notifications,
+        Double energyAlertingThreshold
+) {
 }
