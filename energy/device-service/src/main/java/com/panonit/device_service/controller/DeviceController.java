@@ -21,7 +21,7 @@ public class DeviceController {
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<GetDeviceResponseDto> getDevice(@PathVariable Long id) {
-        return service.getDevice(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.getDevice(id));
     }
 
     @PutMapping(path = "/{id}")

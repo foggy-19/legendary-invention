@@ -8,7 +8,7 @@ public interface DeviceService {
 
     CreateDeviceResponseDto createDevice(CreateDeviceRequestDto createDeviceRequestDto);
 
-    Optional<GetDeviceResponseDto> getDevice(Long id);
+    GetDeviceResponseDto getDevice(Long id);
 
     UpdateDeviceResponseDto updateDevice(Long id, UpdateDeviceRequestDto updateDeviceRequestDto);
 
