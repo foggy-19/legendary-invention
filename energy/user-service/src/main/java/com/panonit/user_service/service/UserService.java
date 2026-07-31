@@ -8,7 +8,7 @@ public interface UserService {
 
     CreateUserResponseDto createUser(CreateUserRequestDto createUserRequestDto);
 
-    Optional<GetUserResponseDto> getUser(Long id);
+    GetUserResponseDto getUser(Long id);
 
     UpdateUserResponseDto updateUser(Long id, UpdateUserRequestDto updateUserRequestDto);
 
