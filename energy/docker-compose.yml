@@ -16,6 +16,22 @@ services:
       - mysql_data:/var/lib/mysql
       - mysql_data:/var/log/mysql
 
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password
+      - DOCKER_INFLUXDB_INIT_ORG=panonit
+      - DOCKER_INFLUXDB_INIT_BUCKET=energy-bucket
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+    ports:
+      - "8086:8086"
+    volumes:
+      - influx_data:/var/lib/influxdb2
+
   adminer:
     image: adminer:latest
     container_name: adminer
@@ -103,4 +119,5 @@ services:
 
 volumes:
   mysql_data:
+  influx_data:
   kafka_data:
