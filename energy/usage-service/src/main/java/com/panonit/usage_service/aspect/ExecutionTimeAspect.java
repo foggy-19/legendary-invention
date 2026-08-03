@@ -1,0 +1,30 @@
+package com.panonit.usage_service.aspect;
+
+import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Aspect
+@Component
+public class ExecutionTimeAspect {
+
+    @Pointcut("execution(* com.panonit.usage_service.service..*.*(..))")
+    public void serviceMethods() {
+    }
+
+    @Around("serviceMethods()")
+    public Object measureExecutionTime(ProceedingJoinPoint pjp) throws Throwable {
+        long start = System.currentTimeMillis();
+
+        try {
+            return pjp.proceed();
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            log.info("[service]:[{}] -> {} ms", pjp.getSignature().getName(), duration);
+        }
+    }
+}
