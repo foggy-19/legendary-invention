@@ -3,7 +3,7 @@ package com.panonit.ingestion_service.service.impl;
 import com.panonit.ingestion_service.dto.CreateEnergyUsageRequestDto;
 import com.panonit.ingestion_service.mapper.EnergyUsageMapper;
 import com.panonit.ingestion_service.service.IngestionService;
-import kafka.event.EnergyUsageEvent;
+import com.panonit.kafka.event.EnergyUsageEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;

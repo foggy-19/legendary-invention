@@ -1,7 +1,7 @@
 package com.panonit.ingestion_service.mapper;
 
 import com.panonit.ingestion_service.dto.CreateEnergyUsageRequestDto;
-import kafka.event.EnergyUsageEvent;
+import com.panonit.kafka.event.EnergyUsageEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 

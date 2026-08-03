@@ -1,4 +1,4 @@
-package kafka.event;
+package com.panonit.kafka.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
