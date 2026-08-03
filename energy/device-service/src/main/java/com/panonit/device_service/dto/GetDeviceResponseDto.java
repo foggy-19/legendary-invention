@@ -6,6 +6,7 @@ public record GetDeviceResponseDto(
         String id,
         String name,
         DeviceType type,
-        String location
+        String location,
+        Long userId
 ) {
 }
