@@ -1,0 +1,1 @@
+ALTER TABLE `alerts` MODIFY COLUMN `user_id` BIGINT NOT NULL;
