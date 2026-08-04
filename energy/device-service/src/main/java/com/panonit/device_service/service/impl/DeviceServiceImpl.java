@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class DeviceServiceImpl implements DeviceService {
@@ -53,5 +55,10 @@ public class DeviceServiceImpl implements DeviceService {
                 .orElseThrow(() -> new DeviceNotFoundException(String.format("Device with ID %s not found", id)));
 
         repository.delete(device);
+    }
+
+    @Override
+    public List<DeviceDto> getUserDevices(Long userId) {
+        return repository.findAllByUserId(userId).stream().map(mapper::toDeviceDto).toList();
     }
 }

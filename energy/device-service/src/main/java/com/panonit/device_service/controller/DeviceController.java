@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(path = "/api/v1/device")
 @RequiredArgsConstructor
@@ -34,5 +36,10 @@ public class DeviceController {
         service.deleteDevice(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(path = "/user/{userId}")
+    public ResponseEntity<List<DeviceDto>> getUserDevices(@PathVariable Long userId) {
+        return ResponseEntity.ok(service.getUserDevices(userId));
     }
 }
