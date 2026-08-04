@@ -16,7 +16,11 @@ public class ExecutionTimeAspect {
     public void serviceMethods() {
     }
 
-    @Around("serviceMethods()")
+    @Pointcut("execution(* com.panonit.usage_service.controller..*.*(..))")
+    public void controllerMethods() {
+    }
+
+    @Around("controllerMethods()")
     public Object measureExecutionTime(ProceedingJoinPoint pjp) throws Throwable {
         long start = System.currentTimeMillis();
 
@@ -24,7 +28,7 @@ public class ExecutionTimeAspect {
             return pjp.proceed();
         } finally {
             long duration = System.currentTimeMillis() - start;
-            log.info("[service]:[{}] -> {} ms", pjp.getSignature().getName(), duration);
+            log.info("[controller]:[{}] -> {} ms", pjp.getSignature().getName(), duration);
         }
     }
 }

@@ -17,6 +17,10 @@ public class LoggingAspect {
     public void serviceMethods() {
     }
 
+    @Pointcut("execution(* com.panonit.usage_service.controller..*.*(..))")
+    public void controllerMethods() {
+    }
+
     @Before("serviceMethods()")
     public void serviceLogBefore(JoinPoint joinPoint) {
         log.info("[service]:[{}] <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
@@ -25,5 +29,15 @@ public class LoggingAspect {
     @AfterReturning(pointcut = "serviceMethods()", returning = "result")
     public void serviceLogAfterReturning(JoinPoint joinPoint, Object result) {
         log.info("[service]:[{}] -> {}", joinPoint.getSignature().getName(), result);
+    }
+
+    @Before("controllerMethods()")
+    public void controllerLogBefore(JoinPoint joinPoint) {
+        log.info("[controller]:[{}] <- {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
+    }
+
+    @AfterReturning(pointcut = "controllerMethods()", returning = "result")
+    public void controllerLogAfterReturning(JoinPoint joinPoint, Object result) {
+        log.info("[controller]:[{}] -> {}", joinPoint.getSignature().getName(), result);
     }
 }

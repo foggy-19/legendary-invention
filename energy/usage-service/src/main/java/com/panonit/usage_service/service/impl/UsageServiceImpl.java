@@ -8,6 +8,7 @@ import com.influxdb.query.FluxTable;
 import com.panonit.kafka.event.AlertingEvent;
 import com.panonit.kafka.event.EnergyUsageEvent;
 import com.panonit.usage_service.dto.DeviceDto;
+import com.panonit.usage_service.dto.GetUserDeviceUsageDto;
 import com.panonit.usage_service.dto.UserDto;
 import com.panonit.usage_service.model.DeviceEnergy;
 import com.panonit.usage_service.service.AlertingService;
@@ -69,6 +70,11 @@ public class UsageServiceImpl implements UsageService {
                 .time(event.timestamp(), WritePrecision.MS);
 
         influx.getWriteApiBlocking().writePoint(bucket, organization, point);
+    }
+
+    @Override
+    public GetUserDeviceUsageDto getUserDeviceUsageForDays(Long userId, int days) {
+        return null;
     }
 
     @Scheduled(cron = "0 * * * * *")
