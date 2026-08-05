@@ -5,4 +5,6 @@ import com.panonit.usage_service.dto.UserDto;
 public interface UserService {
 
     UserDto getUserById(Long userId);
+
+
 }

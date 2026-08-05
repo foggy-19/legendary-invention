@@ -1,8 +1,11 @@
 package com.panonit.usage_service.dto;
 
+import lombok.Builder;
+
 import java.util.List;
 
-public record GetUserDeviceUsageDto(
+@Builder
+public record UsageDto(
         Long userId,
         List<DeviceDto> devices
 ) {

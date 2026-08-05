@@ -9,8 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeviceEnergy {
-    private Long deviceId;
-    private double energyConsumed;
-    private Long userId;
+public class Device {
+    Long id;
+    String name;
+    String type;
+    String location;
+    Long userId;
+    Double energyConsumed;
 }

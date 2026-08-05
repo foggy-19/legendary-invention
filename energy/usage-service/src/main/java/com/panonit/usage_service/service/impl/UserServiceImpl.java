@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -20,7 +21,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long userId) {
-        String url = String.format("%s/%s", this.baseUrl, userId);
+        String url = UriComponentsBuilder
+                .fromUriString(baseUrl)
+                .path("/{userId}")
+                .buildAndExpand(userId)
+                .toUriString();
 
         ResponseEntity<UserDto> response = restTemplate.getForEntity(url, UserDto.class);
         return response.getBody();

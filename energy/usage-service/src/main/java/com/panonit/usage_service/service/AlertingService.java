@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface AlertingService {
 
+    void publish(AlertingEvent event);
     void publish(List<AlertingEvent> events);
 }

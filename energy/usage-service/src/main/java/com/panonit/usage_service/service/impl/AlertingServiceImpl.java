@@ -19,7 +19,12 @@ public class AlertingServiceImpl implements AlertingService {
     }
 
     @Override
+    public void publish(AlertingEvent event) {
+        kafka.send(ENERGY_ALERTS_TOPIC, event);
+    }
+
+    @Override
     public void publish(List<AlertingEvent> alerts) {
-        alerts.forEach(alert -> kafka.send(ENERGY_ALERTS_TOPIC, alert));
+        alerts.forEach(this::publish);
     }
 }

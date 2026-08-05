@@ -25,7 +25,7 @@ public class UsageServiceImpl implements UsageService {
                 .path("/{userId}")
                 .queryParam("days", days)
                 .buildAndExpand(userId)
-                .toString();
+                .toUriString();
 
         ResponseEntity<UsageDto> response = restTemplate.getForEntity(url, UsageDto.class);
 

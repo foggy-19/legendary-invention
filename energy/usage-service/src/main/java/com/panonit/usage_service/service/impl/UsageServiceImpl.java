@@ -4,17 +4,18 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import com.influxdb.query.FluxRecord;
-import com.influxdb.query.FluxTable;
 import com.panonit.kafka.event.AlertingEvent;
 import com.panonit.kafka.event.EnergyUsageEvent;
 import com.panonit.usage_service.dto.DeviceDto;
-import com.panonit.usage_service.dto.GetUserDeviceUsageDto;
-import com.panonit.usage_service.dto.UserDto;
+import com.panonit.usage_service.dto.UsageDto;
+import com.panonit.usage_service.model.Device;
 import com.panonit.usage_service.model.DeviceEnergy;
 import com.panonit.usage_service.service.AlertingService;
 import com.panonit.usage_service.service.DeviceService;
 import com.panonit.usage_service.service.UsageService;
 import com.panonit.usage_service.service.UserService;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -28,15 +29,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UsageServiceImpl implements UsageService {
 
-    private static final long AGGREGATION_WINDOW_SECONDS = 3600;
+    private static final String TAG = "device-id";
+    private static final String FIELD = "energy-consumed";
+    private static final String MEASUREMENT = "energy-usage";
+    private static final String VALUE = "_value";
 
-    private final static String MEASUREMENT = "energy-usage";
-    private final static String TAG = "device-id";
-    private final static String FIELD = "energy-consumed";
-    private static final String VALUE_KEY = "_value";
+    private static final int HOUR_SECONDS = 3600;
 
     private final String bucket;
     private final String organization;
@@ -72,81 +74,188 @@ public class UsageServiceImpl implements UsageService {
         influx.getWriteApiBlocking().writePoint(bucket, organization, point);
     }
 
-    @Override
-    public GetUserDeviceUsageDto getUserDeviceUsageForDays(Long userId, int days) {
-        return null;
-    }
-
     @Scheduled(cron = "0 * * * * *")
-    public void aggregateAndAlert() {
-        var aggregate = queryAndAggregateEnergy(Instant.now());
-        var alerts = getAlertingEvents(aggregate);
+    public void aggregateDeviceEnergyUsage() {
+        var deviceEnergies = enrichWithUserIds(queryDeviceEnergyForHour());
 
-        alertingService.publish(alerts);
+        var userEnergyMap = deviceEnergies.stream()
+                .collect(Collectors.groupingBy(DeviceEnergy::getUserId, Collectors.summingDouble(DeviceEnergy::getEnergyConsumed)));
+
+        checkAndPublishAlerts(userEnergyMap);
     }
 
-    private List<AlertingEvent> getAlertingEvents(Map<Long, Double> userEnergyUsageMap) {
-        return userEnergyUsageMap.keySet().stream()
-                .map(userService::getUserById)
-                .filter(user -> user != null && user.notifications())
-                .filter(user -> userEnergyUsageMap.get(user.id()) >= user.energyAlertingThreshold())
-                .map(user -> toAlertingEvent(user, userEnergyUsageMap.get(user.id())))
-                .toList();
-    }
+    private List<DeviceEnergy> queryDeviceEnergyForHour() {
+        var fluxQuery = getFluxQuery();
 
-    private Map<Long, Double> queryAndAggregateEnergy(Instant timestamp) {
-        Instant start = timestamp.minusSeconds(AGGREGATION_WINDOW_SECONDS);
-        List<FluxTable> tables = influx.getQueryApi().query(getQuery(start, timestamp), organization);
-        return getUserTotalEnergyUsage(tables);
-    }
-
-    private @NonNull Map<Long, Double> getUserTotalEnergyUsage(List<FluxTable> tables) {
-        Map<Long, Double> map = new HashMap<>();
-
-        var grouping = tables.stream()
+        return influx.getQueryApi().query(fluxQuery, organization).stream()
                 .flatMap(table -> table.getRecords().stream())
                 .map(this::toDeviceEnergy)
                 .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(DeviceEnergy::userId));
-
-        grouping.forEach((key, value) -> {
-            Double total = value.stream().mapToDouble(DeviceEnergy::energyConsumed).sum();
-            map.put(key, total);
-        });
-
-        return map;
-    }
-
-    private AlertingEvent toAlertingEvent(UserDto user, Double total) {
-        return new AlertingEvent(
-                user.id(),
-                user.email(),
-                user.energyAlertingThreshold(),
-                total,
-                "Energy consumption threshold exceeded!"
-        );
+                .toList();
     }
 
     private DeviceEnergy toDeviceEnergy(FluxRecord record) {
-        Long deviceId = Long.valueOf(record.getValueByKey(TAG).toString());
-        Double energyConsumed = extractEnergyValue(record.getValueByKey(VALUE_KEY));
-        DeviceDto dto = deviceService.getDeviceById(deviceId);
+        var deviceIdStr = (String) record.getValueByKey(TAG);
+        if (deviceIdStr == null) {
+            return null;
+        }
 
-        return (dto != null && dto.userId() != null) ? new DeviceEnergy(dto.userId(), deviceId, energyConsumed) : null;
+        var energyConsumed = extractDouble(record.getValueByKey(VALUE));
+
+        return DeviceEnergy.builder()
+                .deviceId(Long.valueOf(deviceIdStr))
+                .energyConsumed(energyConsumed)
+                .build();
     }
 
-    private Double extractEnergyValue(Object value) {
-        return value instanceof Number ? ((Number) value).doubleValue() : 0.0;
+    private List<DeviceEnergy> enrichWithUserIds(List<DeviceEnergy> deviceEnergies) {
+        deviceEnergies.forEach(de -> {
+            try {
+                var device = deviceService.getDeviceById(de.getDeviceId());
+                if (device != null && device.userId() != null) {
+                    de.setUserId(device.userId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to fetch device {}: {}", de.getDeviceId(), e.getMessage());
+            }
+        });
+
+        return deviceEnergies.stream().filter(de -> de.getUserId() != null).toList();
     }
 
-    private @NonNull String getQuery(Instant start, Instant stop) {
+    private void checkAndPublishAlerts(Map<Long, Double> userEnergyMap) {
+        userEnergyMap.forEach((userId, totalConsumption) -> {
+            try {
+                var user = userService.getUserById(userId);
+                if (user == null || user.id() == null || !user.notifications()) {
+                    return;
+                }
+
+                var threshold = user.energyAlertingThreshold();
+                if (totalConsumption > threshold) {
+                    alertingService.publish(new AlertingEvent(userId, user.email(), threshold, totalConsumption, "Energy consumption threshold exceeded!"));
+                }
+            } catch (Exception e) {
+                log.error("Failed to user {}: {}", userId, e.getMessage());
+            }
+        });
+    }
+
+
+    @Override
+    public UsageDto getXDaysUsageForUser(Long userId, int days) {
+        var devices = deviceService.getAllDevicesForUser(userId).stream()
+                .map(this::toDevice)
+                .toList();
+
+        if (devices.isEmpty()) {
+            return UsageDto.builder()
+                    .userId(userId)
+                    .devices(null)
+                    .build();
+        }
+
+        try {
+            var energyMap = queryDeviceEnergyForDays(devices, days);
+            var resultDevices = devices.stream()
+                    .peek(d -> d.setEnergyConsumed(energyMap.getOrDefault(d.getId(), 0.0)))
+                    .map(this::toDeviceDto)
+                    .toList();
+
+            log.info("Aggregated energy consumption for userId {}: {}", userId, energyMap);
+            return UsageDto.builder()
+                    .userId(userId)
+                    .devices(resultDevices)
+                    .build();
+        } catch (Exception e) {
+            return UsageDto.builder()
+                    .userId(userId)
+                    .devices(null)
+                    .build();
+        }
+    }
+
+    private Device toDevice(DeviceDto dto) {
+        return Device.builder()
+                .id(dto.id())
+                .name(dto.name())
+                .type(dto.type())
+                .location(dto.location())
+                .userId(dto.userId())
+                .build();
+    }
+
+    private DeviceDto toDeviceDto(Device device) {
+        return DeviceDto.builder()
+                .id(device.getId())
+                .name(device.getName())
+                .type(device.getType())
+                .location(device.getLocation())
+                .userId(device.getUserId())
+                .energyConsumed(device.getEnergyConsumed())
+                .build();
+    }
+
+    private Map<Long, Double> queryDeviceEnergyForDays(List<Device> devices, int days) {
+        var fluxQuery = getFluxQuery(days, getDeviceFilter(devices));
+
+        var aggregatedMap = new HashMap<Long, Double>();
+        influx.getQueryApi().query(fluxQuery, organization).stream()
+                .flatMap(table -> table.getRecords().stream())
+                .forEach(record -> {
+                    try {
+                        var deviceIdStr = record.getValueByKey(TAG);
+                        if (deviceIdStr != null) {
+                            var deviceId = Long.parseLong(deviceIdStr.toString());
+                            var energy = extractDouble(record.getValueByKey(VALUE));
+                            aggregatedMap.merge(deviceId, energy, Double::sum);
+                        }
+                    } catch (NumberFormatException e) {
+                        log.error("Failed to parse deviceId from flux record: {}", record.getValueByKey(TAG));
+                    }
+                });
+
+        return aggregatedMap;
+    }
+
+    private @NonNull String getFluxQuery() {
+        var end = Instant.now();
+        var start = end.minusSeconds(HOUR_SECONDS);
+
         return String.format("""
                 from(bucket: "%s")
                   |> range(start: time(v: "%s"), stop: time(v: "%s"))
                   |> filter(fn: (r) => r["_measurement"] == "%s")
                   |> filter(fn: (r) => r["_field"] == "%s")
                   |> group(columns: ["%s"])
-                  |> sum(column: "_value")
-                """, bucket, start, stop, MEASUREMENT, FIELD, TAG);
+                  |> sum(column: "%s")
+                """, bucket, start, end, MEASUREMENT, FIELD, TAG, VALUE);
+    }
+
+    private @NonNull String getFluxQuery(long days, String deviceIdFilter) {
+        val end = Instant.now();
+        var start = end.minusSeconds(days * 24 * HOUR_SECONDS);
+
+        return String.format("""
+                from(bucket: "%s")
+                  |> range(start: time(v: "%s"), stop: time(v: "%s"))
+                  |> filter(fn: (r) => r["_measurement"] == "%s")
+                  |> filter(fn: (r) => r["_field"] == "%s")
+                  |> filter(fn: (r) => %s)
+                  |> group(columns: ["%s"])
+                  |> sum(column: "%s")
+                """, bucket, start, end, MEASUREMENT, FIELD, deviceIdFilter, TAG, VALUE);
+    }
+
+    private String getDeviceFilter(List<Device> devices) {
+        return devices.stream()
+                .map(Device::getId)
+                .filter(Objects::nonNull)
+                .map(id -> String.format("r[\"%s\"] == \"%s\"", TAG, id))
+                .collect(Collectors.joining(" or "));
+    }
+
+    private Double extractDouble(Object value) {
+        return value instanceof Number ? ((Number) value).doubleValue() : 0.0;
     }
 }

@@ -1,6 +1,6 @@
 package com.panonit.usage_service.controller;
 
-import com.panonit.usage_service.dto.GetUserDeviceUsageDto;
+import com.panonit.usage_service.dto.UsageDto;
 import com.panonit.usage_service.service.UsageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,13 +8,19 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/api/v1/usage")
-@RequiredArgsConstructor
 public class UsageController {
 
-    private final UsageService service;
+    private final UsageService usageService;
 
-    @GetMapping(path = "/{userId}")
-    public ResponseEntity<GetUserDeviceUsageDto> getUserDeviceUsageForDays(@PathVariable Long userId, @RequestParam(defaultValue = "3") int days) {
-        return ResponseEntity.ok(service.getUserDeviceUsageForDays(userId, days));
+    public UsageController(UsageService usageService) {
+        this.usageService = usageService;
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UsageDto> getUserDeviceUsage(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "3") int days) {
+        final UsageDto usage = usageService.getXDaysUsageForUser(userId, days);
+        return ResponseEntity.ok(usage);
     }
 }
