@@ -33,6 +33,17 @@ services:
     volumes:
       - influx_data:/var/lib/influxdb2
 
+  keycloak-db:
+    container_name: keycloak-mysql
+    image: mysql:8.4.0
+    volumes:
+      - keycloak_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: energy-keycloak-db
+      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+
   adminer:
     image: adminer:latest
     container_name: adminer
@@ -126,7 +137,28 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092  # Use internal Docker network name
       DYNAMIC_CONFIG_ENABLED: 'true'
 
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:26.7
+    command: [ "start-dev", "--import-realm" ]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      DB_VENDOR: MYSQL
+      DB_ADDR: mysql
+      DB_DATABASE: energy-keycloak-db
+      DB_USER: keycloak
+      DB_PASSWORD: password
+    ports:
+      - "8087:8080"
+    volumes:
+      - ./docker/keycloak/realms/:/opt/keyclok/data/import/
+    depends_on:
+      - keycloak-db
+
+
 volumes:
   mysql_data:
   influx_data:
   kafka_data:
+  keycloak_data:
