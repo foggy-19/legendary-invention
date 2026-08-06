@@ -18,6 +18,8 @@ public class SecurityConfig {
         return http
                 .authorizeHttpRequests(auth -> {
                             auth.requestMatchers(HttpMethod.GET, "/actuator/**").permitAll();
+                            auth.requestMatchers(HttpMethod.GET, "/api-docs/*/**").permitAll();
+                            auth.requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/v3/api-docs/swagger-config").permitAll();
                             auth.anyRequest().authenticated();
                         }
                 )
