@@ -2,7 +2,6 @@ package com.panonit.usage_service.controller;
 
 import com.panonit.usage_service.dto.UsageDto;
 import com.panonit.usage_service.service.UsageService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
