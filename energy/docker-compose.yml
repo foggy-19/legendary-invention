@@ -156,9 +156,40 @@ services:
     depends_on:
       - keycloak-db
 
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.13.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=5d
+      - --web.enable-lifecycle
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:11.4.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
 
 volumes:
   mysql_data:
   influx_data:
-  kafka_data:
   keycloak_data:
+  grafana_data:
